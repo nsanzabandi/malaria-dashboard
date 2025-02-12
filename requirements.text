@@ -4,3 +4,4 @@ geopandas==0.14.1
 pandas==2.1.4
 plotly==5.18.0
 gunicorn==21.2.0
+fiona>=1.8.21

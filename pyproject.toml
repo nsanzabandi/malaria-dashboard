@@ -12,6 +12,7 @@ pandas = "^2.1.0"
 plotly = "^5.10.0"
 geopandas = "^0.13.2"
 dash_leaflet = "*"
+fiona>=1.8.21
 
 
 [build-system]
