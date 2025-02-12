@@ -1,3 +1,4 @@
+import os
 import dash
 from dash import dcc, html, Input, Output, dash_table
 import plotly.express as px
@@ -6,8 +7,10 @@ import pandas as pd
 import dash_leaflet as dl
 import json
 
+
 # Initialize Dash app
 app = dash.Dash(__name__)
+server = app.server
 
 # Custom CSS for the popup
 app.index_string = '''
@@ -513,4 +516,4 @@ else:
     ])
 
 if __name__ == '__main__':
-    app.run_server(host='0.0.0.0', port=int(os.environ.get('PORT', 8080)))
+    app.run_server(host="0.0.0.0", port=8000, debug=False)
