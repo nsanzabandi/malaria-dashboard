@@ -11,6 +11,8 @@ dash = "^2.15.0"
 pandas = "^2.1.0"
 plotly = "^5.10.0"
 geopandas = "^0.13.2"
+dash_leaflet = "*"
+
 
 [build-system]
 requires = ["poetry-core"]
