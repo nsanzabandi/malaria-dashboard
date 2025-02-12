@@ -1,0 +1,17 @@
+[tool.poetry]
+name = "malaria-dashboard"
+version = "0.1.0"
+description = "A malaria case analysis dashboard"
+authors = ["Daniel <danielnsanzabandi@gmail.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.11"
+dash = "^2.15.0"
+pandas = "^2.1.0"
+plotly = "^5.10.0"
+geopandas = "^0.13.2"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
