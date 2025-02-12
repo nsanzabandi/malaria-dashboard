@@ -1,0 +1,6 @@
+dash==2.14.2
+dash-leaflet==1.0.0
+geopandas==0.14.1
+pandas==2.1.4
+plotly==5.18.0
+gunicorn==21.2.0
