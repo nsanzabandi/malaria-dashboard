@@ -7,7 +7,6 @@ import pandas as pd
 import dash_leaflet as dl
 import json
 
-
 # Initialize Dash app
 app = dash.Dash(__name__)
 server = app.server
@@ -115,15 +114,16 @@ def load_data():
 
 # Load the data
 df_malaria, df_wetlands = load_data()
+merged_df = df_malaria  # Store the actual merged data
 
-if df_malaria is not None and df_wetlands is not None:
+if merged_df is not None and df_wetlands is not None:
     # Create wetlands table
     wetlands_table = dash_table.DataTable(
-    data=df_wetlands[['Nom', 'Area_1']].rename(columns={'Area_1': 'Area_km2'}).round(2).to_dict('records'),
-    columns=[
-        {"name": "Wetland Name", "id": "Nom"},
-        {"name": "Area (km²)", "id": "Area_km2"}
-    ],
+        data=df_wetlands[['Nom', 'Area_1']].rename(columns={'Area_1': 'Area_km2'}).round(2).to_dict('records'),
+        columns=[
+            {"name": "Wetland Name", "id": "Nom"},
+            {"name": "Area (km²)", "id": "Area_km2"}
+        ],
         style_table={'height': '300px', 'overflowY': 'auto'},
         style_cell={'textAlign': 'left', 'padding': '10px'},
         style_header={
@@ -138,14 +138,13 @@ if df_malaria is not None and df_wetlands is not None:
         page_size=10
     )
     
-    # Get year range
-    min_year = df_malaria['Year'].min()
-    max_year = df_malaria['Year'].max()
+    # Get year range from merged_df
+    min_year = merged_df['Year'].min()
+    max_year = merged_df['Year'].max()
     
     # Convert wetlands to GeoJSON
     wetlands_geojson = json.loads(df_wetlands.to_json())
-    
-    # Create layout
+	# Create layout
     app.layout = html.Div([
         # Title
         html.H1("Rwanda malaria outbreak dashboard", 
@@ -158,8 +157,8 @@ if df_malaria is not None and df_wetlands is not None:
                 html.Label('Select District:', style={'fontWeight': 'bold'}),
                 dcc.Dropdown(
                     id='district-dropdown',
-                    options=[{'label': d, 'value': d} for d in sorted(df_malaria['District'].unique())],
-                    value=df_malaria['District'].unique()[0]
+                    options=[{'label': d, 'value': d} for d in sorted(merged_df['District'].unique())],
+                    value=merged_df['District'].unique()[0]
                 )
             ], style={'width': '30%', 'display': 'inline-block', 'marginRight': '20px'}),
             
@@ -177,131 +176,138 @@ if df_malaria is not None and df_wetlands is not None:
             ], style={'width': '60%', 'display': 'inline-block'})
         ], style={'backgroundColor': '#f8f9fa', 'padding': '20px', 'borderRadius': '10px', 'margin': '20px'}),
         
-        # Summary Statistics Cards
-        html.Div(id='summary-stats', style={'textAlign': 'center', 'margin': '20px'}),
-        
-        # Maps Container
-        html.Div([
-            # Malaria Cases Map
-            html.Div([
-                html.H3("Malaria Cases Distribution", style={'textAlign': 'center'}),
+        # Loading spinner for the entire content
+        dcc.Loading(
+            id="loading-1",
+            type="circle",
+            children=[
+                # Summary Statistics Cards
+                html.Div(id='summary-stats', style={'textAlign': 'center', 'margin': '20px'}),
+                
+                # Maps Container
                 html.Div([
-                    # Map Legend
+                    # Malaria Cases Map
                     html.Div([
-                        html.H4("Map Legend", style={'marginBottom': '10px'}),
+                        html.H3("Malaria Cases Distribution", style={'textAlign': 'center'}),
                         html.Div([
+                            # Map Legend
                             html.Div([
-                                html.Div(style={
-                                    'width': '20px',
-                                    'height': '20px',
-                                    'backgroundColor': '#2ecc71',
-                                    'display': 'inline-block',
-                                    'marginRight': '5px'
-                                }),
-                                html.Span("Increasing Cases")
-                            ], style={'marginBottom': '5px'}),
-                            html.Div([
-                                html.Div(style={
-                                    'width': '20px',
-                                    'height': '20px',
-                                    'backgroundColor': '#e74c3c',
-                                    'display': 'inline-block',
-                                    'marginRight': '5px'
-                                }),
-                                html.Span("Decreasing Cases")
-                            ])
-                        ], style={'padding': '10px', 'backgroundColor': 'white', 'borderRadius': '5px'})
-                    ], style={'position': 'absolute', 'top': '10px', 'right': '10px', 'zIndex': '1000'}),
-                    
-                    dl.Map([
-                        dl.TileLayer(),
-                        dl.GeoJSON(id='geojson-layer', data={}),
-                        dl.LayerGroup(id='marker-layer')
-                    ], 
-                    center=[-1.9403, 29.8739],
-                    zoom=8,
-                    style={'height': '400px', 'width': '100%'},
-                    bounds=RWANDA_BOUNDS,
-                    maxBounds=RWANDA_BOUNDS)
-                ], style={'position': 'relative'})
-            ], style={'width': '48%', 'display': 'inline-block', 'verticalAlign': 'top'}),
-            
-            # Wetlands Map
-            html.Div([
-                html.H3("Wetlands Distribution", style={'textAlign': 'center'}),
-                dl.Map(
-                    center=[-1.9403, 29.8739],
-                    zoom=8,
-                    maxBounds=RWANDA_BOUNDS,
-                    minZoom=8,
-                    children=[
-                        dl.TileLayer(),
-                        dl.Rectangle(
+                                html.H4("Map Legend", style={'marginBottom': '10px'}),
+                                html.Div([
+                                    html.Div([
+                                        html.Div(style={
+                                            'width': '20px',
+                                            'height': '20px',
+                                            'backgroundColor': '#2ecc71',
+                                            'display': 'inline-block',
+                                            'marginRight': '5px'
+                                        }),
+                                        html.Span("Increasing Cases")
+                                    ], style={'marginBottom': '5px'}),
+                                    html.Div([
+                                        html.Div(style={
+                                            'width': '20px',
+                                            'height': '20px',
+                                            'backgroundColor': '#e74c3c',
+                                            'display': 'inline-block',
+                                            'marginRight': '5px'
+                                        }),
+                                        html.Span("Decreasing Cases")
+                                    ])
+                                ], style={'padding': '10px', 'backgroundColor': 'white', 'borderRadius': '5px'})
+                            ], style={'position': 'absolute', 'top': '10px', 'right': '10px', 'zIndex': '1000'}),
+                            
+                            dl.Map([
+                                dl.TileLayer(),
+                                dl.GeoJSON(id='geojson-layer', data={}),
+                                dl.LayerGroup(id='marker-layer')
+                            ], 
+                            center=[-1.9403, 29.8739],
+                            zoom=8,
+                            style={'height': '400px', 'width': '100%'},
                             bounds=RWANDA_BOUNDS,
-                            color='green',
-                            weight=2,
-                            fill=False,
-                            opacity=1
-                        ),
-                        dl.GeoJSON(
-                            data=wetlands_geojson,
-                            id='wetlands-layer',
-                            options=dict(
-                                style=dict(
-                                    fillColor='red',
+                            maxBounds=RWANDA_BOUNDS)
+                        ], style={'position': 'relative'})
+                    ], style={'width': '48%', 'display': 'inline-block', 'verticalAlign': 'top'}),
+                    
+                    # Wetlands Map
+                    html.Div([
+                        html.H3("Wetlands Distribution", style={'textAlign': 'center'}),
+                        dl.Map(
+                            center=[-1.9403, 29.8739],
+                            zoom=8,
+                            maxBounds=RWANDA_BOUNDS,
+                            minZoom=8,
+                            children=[
+                                dl.TileLayer(),
+                                dl.Rectangle(
+                                    bounds=RWANDA_BOUNDS,
+                                    color='green',
                                     weight=2,
-                                    opacity=1,
-                                    color='white',
-                                    dashArray='3',
-                                    fillOpacity=0.7
+                                    fill=False,
+                                    opacity=1
+                                ),
+                                dl.GeoJSON(
+                                    data=wetlands_geojson,
+                                    id='wetlands-layer',
+                                    options=dict(
+                                        style=dict(
+                                            fillColor='red',
+                                            weight=2,
+                                            opacity=1,
+                                            color='white',
+                                            dashArray='3',
+                                            fillOpacity=0.7
+                                        )
+                                    ),
+                                    hoverStyle=dict(fillColor='#ff7800', fillOpacity=0.8)
                                 )
-                            ),
-                            hoverStyle=dict(fillColor='#ff7800', fillOpacity=0.8)
+                            ],
+                            style={'height': '400px', 'width': '100%'}
                         )
-                    ],
-                    style={'height': '400px', 'width': '100%'}
-                )
-            ], style={'width': '48%', 'display': 'inline-block', 'verticalAlign': 'top'})
-        ], style={'margin': '20px'}),
-        
-        # Wetlands Table
-        html.Div([
-            html.H3("Wetlands Information", style={'textAlign': 'center'}),
-            wetlands_table
-        ], style={'margin': '20px', 'padding': '15px', 'backgroundColor': '#f8f9fa', 'borderRadius': '5px'}),
-        
-        # Charts Container
-        html.Div([
-            # Bar Chart
-            html.Div([
-                dcc.Graph(id='facility-bar-chart', style={'height': '300px'})
-            ], style={'width': '48%', 'display': 'inline-block', 'verticalAlign': 'top'}),
-            
-            # Line Chart
-            html.Div([
-                dcc.Graph(id='monthly-trend-chart', style={'height': '300px'})
-            ], style={'width': '48%', 'display': 'inline-block', 'verticalAlign': 'top'})
-        ], style={'margin': '20px'}),
-        
-        # Data Table
-        html.Div([
-            html.H3("Detailed Data", style={'textAlign': 'center'}),
-            dash_table.DataTable(
-                id='cases-table',
-                style_table={'height': '300px', 'overflowY': 'auto'},
-                style_cell={'textAlign': 'left', 'padding': '10px'},
-                style_header={
-                    'backgroundColor': '#f8f9fa',
-                    'fontWeight': 'bold',
-                    'border': '1px solid black'
-                },
-                style_data_conditional=[{
-                    'if': {'row_index': 'odd'},
-                    'backgroundColor': '#f8f9fa'
-                }],
-                page_size=10
-            )
-        ], style={'margin': '20px'})
+                    ], style={'width': '48%', 'display': 'inline-block', 'verticalAlign': 'top'})
+                ], style={'margin': '20px'}),
+                
+                # Wetlands Table
+                html.Div([
+                    html.H3("Wetlands Information", style={'textAlign': 'center'}),
+                    wetlands_table
+                ], style={'margin': '20px', 'padding': '15px', 'backgroundColor': '#f8f9fa', 'borderRadius': '5px'}),
+                
+                # Charts Container
+                html.Div([
+                    # Bar Chart
+                    html.Div([
+                        dcc.Graph(id='facility-bar-chart', style={'height': '300px'})
+                    ], style={'width': '48%', 'display': 'inline-block', 'verticalAlign': 'top'}),
+                    
+                    # Line Chart
+                    html.Div([
+                        dcc.Graph(id='monthly-trend-chart', style={'height': '300px'})
+                    ], style={'width': '48%', 'display': 'inline-block', 'verticalAlign': 'top'})
+                ], style={'margin': '20px'}),
+                
+                # Data Table
+                html.Div([
+                    html.H3("Detailed Data", style={'textAlign': 'center'}),
+                    dash_table.DataTable(
+                        id='cases-table',
+                        style_table={'height': '300px', 'overflowY': 'auto'},
+                        style_cell={'textAlign': 'left', 'padding': '10px'},
+                        style_header={
+                            'backgroundColor': '#f8f9fa',
+                            'fontWeight': 'bold',
+                            'border': '1px solid black'
+                        },
+                        style_data_conditional=[{
+                            'if': {'row_index': 'odd'},
+                            'backgroundColor': '#f8f9fa'
+                        }],
+                        page_size=10
+                    )
+                ], style={'margin': '20px'})
+            ]
+        )
     ])
 
     @app.callback(
@@ -319,11 +325,11 @@ if df_malaria is not None and df_wetlands is not None:
         try:
             # Filter data
             mask = (
-                (df_malaria['District'] == selected_district) &
-                (df_malaria['Year'] >= year_range[0]) &
-                (df_malaria['Year'] <= year_range[1])
+                (merged_df['District'] == selected_district) &
+                (merged_df['Year'] >= year_range[0]) &
+                (merged_df['Year'] <= year_range[1])
             )
-            district_data = df_malaria.loc[mask].copy()
+            district_data = merged_df.loc[mask].copy()
             
             # Aggregate data for table
             agg_data = district_data.groupby('facility_name')['Malaria_cases_OPD'].agg([
@@ -351,7 +357,6 @@ if df_malaria is not None and df_wetlands is not None:
                     lon = facility_data.iloc[0].geometry.centroid.x
                     
                     # Calculate month-over-month growth
-		    # Calculate month-over-month growth
                     facility_monthly = facility_data.groupby(['Year', 'Month'])['Malaria_cases_OPD'].sum().reset_index()
                     if len(facility_monthly) > 1:
                         last_month = facility_monthly.iloc[-1]['Malaria_cases_OPD']
@@ -360,7 +365,7 @@ if df_malaria is not None and df_wetlands is not None:
                     else:
                         mom_growth = 0
                     
-                    # Create custom HTML for the card
+                    # Create popup cards
                     card_color = "#2ecc71" if mom_growth >= 0 else "#e74c3c"
                     card_html = f"""
                     <div style='
